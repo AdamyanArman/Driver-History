@@ -17,29 +17,24 @@ from flask import (
 )
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from openpyxl.utils import get_column_letter
 
-# Անվտանգության գրադարաններ
 from dotenv import load_dotenv
 from werkzeug.security import check_password_hash
 from cryptography.fernet import Fernet
 
-# Բեռնում ենք .env ֆայլի պարունակությունը
+
 load_dotenv()
 
 app = Flask(__name__)
-# Վերցնում ենք secret_key-ը .env-ից
+
 app.secret_key = os.getenv("SECRET_KEY", "fallback_default_secret_key")
 
-# =========================
-# ԳԱՂՏՆԱԳՐՈՒՄ ԵՎ ԱՊԱԿՈԴԱՎՈՐՈՒՄ
-# =========================
+
 encryption_key = os.getenv("ENCRYPTION_KEY")
 cipher_suite = Fernet(encryption_key.encode()) if encryption_key else None
 
 
 def decrypt_data(encrypted_text):
-    """Ապակոդավորում է կոդավորված տեքստը"""
     if not cipher_suite or not encrypted_text:
         return None
     try:
@@ -50,18 +45,14 @@ def decrypt_data(encrypted_text):
 
 
 
-# =========================
-# CONFIG - ԱՊԱՀՈՎՎԱԾ ԵՎ ԱՊԱԿՈԴԱՎՈՐՎԱԾ
-# =========================
-
 WEB_USERNAME = os.getenv("WEB_USERNAME")
 WEB_PASSWORD_HASH = os.getenv("WEB_PASSWORD_HASH")
 
-# Կարդում ենք կոդավորված տեքստը .env-ից և անմիջապես ապակոդավորում (decrypt)
+
 LOGIN_URL = decrypt_data(os.getenv("LOGIN_URL"))
 HISTORY_URL = decrypt_data(os.getenv("HISTORY_URL"))
 
-# Ապակոդավորում ենք վարորդների JSON-ը և վերածում Dictionary-ի
+
 encrypted_drivers_json = os.getenv("DRIVERS_JSON", "")
 decrypted_drivers_json = decrypt_data(encrypted_drivers_json)
 
@@ -85,9 +76,6 @@ DRIVER_CHOICES = {
 }
 
 
-# =========================
-# AUTH DECORATOR
-# =========================
 
 def login_required(f):
     @wraps(f)
@@ -98,10 +86,6 @@ def login_required(f):
 
     return decorated_function
 
-
-# =========================
-# ROUTES
-# =========================
 
 @app.route("/")
 def index():
@@ -262,12 +246,12 @@ def export():
         flash("Տվյալներ չկան արտահանելու համար։ Նախ որոնեք։", "error")
         return redirect(url_for("dashboard"))
 
-    # Create workbook
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Order History"
 
-    # Styles
+
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="FF001F", end_color="FF001F", fill_type="solid")
     title_font = Font(bold=True, size=14, color="FF001F")
@@ -279,13 +263,13 @@ def export():
     )
     center_align = Alignment(horizontal="center", vertical="center")
 
-    # Title
+
     ws.merge_cells("A1:C1")
     ws["A1"] = f"Վարորդ՝ {driver_name} | {from_date} — {to_date}"
     ws["A1"].font = title_font
     ws["A1"].alignment = Alignment(horizontal="left", vertical="center")
 
-    # Headers
+
     headers = ["ID", "Առաքման արժեք", "Ամսաթիվ"]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=3, column=col, value=header)
@@ -294,13 +278,13 @@ def export():
         cell.alignment = center_align
         cell.border = thin_border
 
-    # Orders
+
     for row_idx, order in enumerate(orders, 4):
         ws.cell(row=row_idx, column=1, value=order.get("id")).border = thin_border
         ws.cell(row=row_idx, column=2, value=order.get("delivery_price")).border = thin_border
         ws.cell(row=row_idx, column=3, value=order.get("adddate")).border = thin_border
 
-    # Summary section
+
     summary_start = 4 + len(orders) + 2
 
     ws.cell(row=summary_start, column=1, value="Ամփոփում").font = Font(bold=True, size=12)
@@ -346,4 +330,4 @@ def export():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
