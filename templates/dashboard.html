@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Driver History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo-icon-sm">🚚</span>
+            <span>Driver History</span>
+        </div>
+        <div class="nav-actions">
+            <span class="user-info">{{ session.username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Ելք</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="page-header">
+            <h1>Պատվերների որոնում</h1>
+            <p class="text-muted">Ընտրեք վարորդ և ամսաթվերի միջակայք</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="card search-card">
+            <form method="POST" class="search-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="driver">Վարորդ</label>
+                        <select id="driver" name="driver" required>
+                            <option value="" disabled {% if not selected_driver %}selected{% endif %}>Ընտրեք վարորդ</option>
+                            {% for d in drivers %}
+                            <option value="{{ d }}" {% if selected_driver == d %}selected{% endif %}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="from_date">Սկիզբ</label>
+                        <input type="date" id="from_date" name="from_date" value="{{ from_date }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="to_date">Ավարտ</label>
+                        <input type="date" id="to_date" name="to_date" value="{{ to_date }}" required>
+                    </div>
+
+                    <div class="form-group form-group-btn">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-primary">
+                            Որոնել
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if orders is not none %}
+        <div class="results-section">
+            <div class="results-header">
+                <div>
+                    <h2>Արդյունքներ</h2>
+                    <p class="text-muted">
+                        {{ selected_driver }} · {{ from_date }} — {{ to_date }} · 
+                        <strong>{{ orders|length }}</strong> պատվեր
+                    </p>
+                </div>
+                <a href="{{ url_for('export') }}" class="btn btn-primary btn-export">
+                    📥 Excel
+                </a>
+            </div>
+
+            <!-- Summary cards -->
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_deliveries }}</div>
+                    <div class="summary-label">Ընդհանուր առաքումներ</div>
+                </div>
+                {% for price, count in delivery_counts.items()|sort %}
+                <div class="summary-card">
+                    <div class="summary-value">{{ count }}</div>
+                    <div class="summary-label">Արժեք՝ {{ price }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Orders table -->
+            <div class="card table-card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Առաքման արժեք</th>
+                                <th>Ամսաթիվ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if orders %}
+                                {% for order in orders %}
+                                <tr>
+                                    <td>{{ order.get('id', '—') }}</td>
+                                    <td>
+                                        {% if order.get('delivery_price') is not none %}
+                                            <span class="price-badge">{{ order.get('delivery_price') }}</span>
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ order.get('adddate', '—') }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="empty-state">Պատվերներ չեն գտնվել</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <footer class="footer">
+        <p>Driver History System</p>
+    </footer>
+</body>
+</html>
