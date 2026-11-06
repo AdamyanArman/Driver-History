@@ -49,6 +49,7 @@ def decrypt_data(encrypted_text):
         return None
 
 
+
 # =========================
 # CONFIG - ԱՊԱՀՈՎՎԱԾ ԵՎ ԱՊԱԿՈԴԱՎՈՐՎԱԾ
 # =========================
